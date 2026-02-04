@@ -1,12 +1,24 @@
 const sequelize = require('./config/database');
 
 async function createTables() {
-    try {
-        await sequelize.authenticate();
-        console.log('--- Auth OK ---');
+  try {
+    await sequelize.authenticate();
+    console.log('--- Auth OK ---');
 
-        // 1. tbl_sistema
-        await sequelize.query(`
+    // 1. tbl_estado_solicitud
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS \`tbl_estado_solicitud\` (
+        \`id_estado_solicitud\` int(11) NOT NULL AUTO_INCREMENT,
+        \`nombre\` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+        \`createdAt\` datetime NOT NULL,
+        \`updatedAt\` datetime NOT NULL,
+        PRIMARY KEY (\`id_estado_solicitud\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+    `);
+    console.log('tbl_estado_solicitud OK');
+
+    // 2. tbl_sistema
+    await sequelize.query(`
       CREATE TABLE IF NOT EXISTS \`tbl_sistema\` (
         \`id_sistema\` int(10) unsigned NOT NULL AUTO_INCREMENT,
         \`nombre\` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -21,13 +33,13 @@ async function createTables() {
         UNIQUE KEY \`codigo\` (\`codigo\`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
     `);
-        console.log('tbl_sistema OK');
+    console.log('tbl_sistema OK');
 
-        // 2. tbl_solicitud
-        await sequelize.query(`
+    // 3. tbl_solicitud
+    await sequelize.query(`
       CREATE TABLE IF NOT EXISTS \`tbl_solicitud\` (
         \`id_solicitud\` int(10) unsigned NOT NULL AUTO_INCREMENT,
-        \`tipo\` enum('ALTA','BAJA') COLLATE utf8_unicode_ci NOT NULL,
+        \`tipo\` enum('ALTA','BAJA','MODIFICACION') COLLATE utf8_unicode_ci NOT NULL,
         \`usuario_objetivo_nombre\` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
         \`usuario_objetivo_dni_ruc\` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
         \`cargo\` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -40,13 +52,15 @@ async function createTables() {
         \`updatedAt\` datetime NOT NULL,
         PRIMARY KEY (\`id_solicitud\`),
         KEY \`id_creado_por\` (\`id_creado_por\`),
-        CONSTRAINT \`tbl_solicitud_ibfk_1\` FOREIGN KEY (\`id_creado_por\`) REFERENCES \`tbl_usuario\` (\`id_usuario\`) ON DELETE CASCADE ON UPDATE CASCADE
+        KEY \`id_estado_solicitud\` (\`id_estado_solicitud\`),
+        CONSTRAINT \`tbl_solicitud_ibfk_1\` FOREIGN KEY (\`id_creado_por\`) REFERENCES \`tbl_usuario\` (\`id_usuario\`) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT \`tbl_solicitud_ibfk_2\` FOREIGN KEY (\`id_estado_solicitud\`) REFERENCES \`tbl_estado_solicitud\` (\`id_estado_solicitud\`) ON DELETE SET NULL ON UPDATE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
     `);
-        console.log('tbl_solicitud OK');
+    console.log('tbl_solicitud OK');
 
-        // 3. tbl_usuario_sistema
-        await sequelize.query(`
+    // 3. tbl_usuario_sistema
+    await sequelize.query(`
       CREATE TABLE IF NOT EXISTS \`tbl_usuario_sistema\` (
         \`id_usuario_sistema\` int(10) unsigned NOT NULL AUTO_INCREMENT,
         \`id_usuario\` int(10) unsigned NOT NULL,
@@ -61,10 +75,10 @@ async function createTables() {
         CONSTRAINT \`tbl_usuario_sistema_ibfk_2\` FOREIGN KEY (\`id_sistema\`) REFERENCES \`tbl_sistema\` (\`id_sistema\`) ON DELETE CASCADE ON UPDATE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
     `);
-        console.log('tbl_usuario_sistema OK');
+    console.log('tbl_usuario_sistema OK');
 
-        // 4. tbl_solicitud_sistema
-        await sequelize.query(`
+    // 4. tbl_solicitud_sistema
+    await sequelize.query(`
       CREATE TABLE IF NOT EXISTS \`tbl_solicitud_sistema\` (
         \`id_solicitud_sistema\` int(10) unsigned NOT NULL AUTO_INCREMENT,
         \`id_solicitud\` int(10) unsigned NOT NULL,
@@ -78,13 +92,13 @@ async function createTables() {
         CONSTRAINT \`tbl_solicitud_sistema_ibfk_2\` FOREIGN KEY (\`id_sistema\`) REFERENCES \`tbl_sistema\` (\`id_sistema\`) ON DELETE CASCADE ON UPDATE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
     `);
-        console.log('tbl_solicitud_sistema OK');
+    console.log('tbl_solicitud_sistema OK');
 
-    } catch (error) {
-        console.error('ERROR:', error.message);
-    } finally {
-        process.exit();
-    }
+  } catch (error) {
+    console.error('ERROR:', error.message);
+  } finally {
+    process.exit();
+  }
 }
 
 createTables();

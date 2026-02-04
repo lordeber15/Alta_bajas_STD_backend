@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Usuario = require('./usuario');
+const EstadoSolicitud = require('./estadoSolicitud');
+const Area = require('./area');
 
 const Solicitud = sequelize.define('tbl_solicitud', {
     id_solicitud: {
@@ -9,7 +10,7 @@ const Solicitud = sequelize.define('tbl_solicitud', {
         autoIncrement: true
     },
     tipo: {
-        type: DataTypes.ENUM('ALTA', 'BAJA'),
+        type: DataTypes.ENUM('ALTA', 'BAJA', 'MODIFICACION'),
         allowNull: false
     },
     usuario_objetivo_nombre: {
@@ -30,7 +31,11 @@ const Solicitud = sequelize.define('tbl_solicitud', {
     },
     id_estado_solicitud: {
         type: DataTypes.INTEGER,
-        defaultValue: 1 // 1: Pendiente, 2: En Proceso, 3: Para Validar, 4: Completado, 5: Observado
+        defaultValue: 1,
+        references: {
+            model: 'tbl_estado_solicitud',
+            key: 'id_estado_solicitud'
+        }
     },
     id_creado_por: {
         type: DataTypes.INTEGER.UNSIGNED,
@@ -54,5 +59,12 @@ const Solicitud = sequelize.define('tbl_solicitud', {
     charset: 'utf8',
     collate: 'utf8_unicode_ci'
 });
+
+// Relaciones
+Solicitud.belongsTo(EstadoSolicitud, { foreignKey: 'id_estado_solicitud', as: 'tbl_estado_solicitud' });
+EstadoSolicitud.hasMany(Solicitud, { foreignKey: 'id_estado_solicitud' });
+
+Solicitud.belongsTo(Area, { foreignKey: 'id_area' });
+Area.hasMany(Solicitud, { foreignKey: 'id_area' });
 
 module.exports = Solicitud;
